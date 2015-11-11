@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.nio.channels.SocketChannel;
+
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketHandler;
 import de.tavendo.autobahn.WebSocketException;
@@ -67,8 +69,15 @@ public class PushService extends Service {
                 public void onClose(int code, String reason) {
                     Log.d(TAG, "Connection lost. Code: " + code + ", Reason: " + reason);
                     // RECONNECT POLICY GOES HERE
+                    //we must try to connect if the problem is from internet connection, server ,...
+                    switch (code){
+                        case CLOSE_CANNOT_CONNECT:
+                        case CLOSE_CONNECTION_LOST:
+                        case CLOSE_INTERNAL_ERROR:
+                        case CLOSE_NORMAL:
+                        case CLOSE_PROTOCOL_ERROR:
+                    }
                 }
-
             });
         } catch (WebSocketException e) {
             e.printStackTrace();
@@ -79,6 +88,7 @@ public class PushService extends Service {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtras(extras);
+        Log.d(TAG, "broadcast sent - permission : " + Befrest.Util.getBroadcastSendingPermission(this));
         sendBroadcast(intent, Befrest.Util.getBroadcastSendingPermission(this));
     }
 }

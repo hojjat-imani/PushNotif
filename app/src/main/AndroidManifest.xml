@@ -5,11 +5,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-
     <!--change following using your app package name-->
     <permission android:protectionLevel="signature"
         android:name="com.oddrun.befrestExample.permission.PUSH_SERVICE" />
-    <uses-permission android:name="com.hojjat.autobahntest.permission.PUSH_SERVICE" />
+    <uses-permission android:name="com.oddrun.befrestExample.permission.PUSH_SERVICE" />
 
     <application
         android:name="com.oddrun.befrestExample.ApplicationConfig"
@@ -30,7 +29,6 @@
         </activity>
 
         <service android:name="com.oddrun.befrest.PushService" />
-
         <receiver
             android:name="com.oddrun.befrestExample.MyBroadcastReceiver"
             android:exported="false">
