@@ -9,11 +9,15 @@ import com.hojjat.autobahntest.befrest.Befrest;
  * Created by ehsan on 11/11/2015.
  */
 public class ApplicationConfig extends Application {
+    static final int APP_ID = 0;
+    static final int USER_ID = 0;
+    static final String AUTH = "";
+
+    private final String TAG = getClass().getSimpleName();
     @Override
     public void onCreate() {
-        Log.d("AppConfing", "oncreate");
         super.onCreate();
-        Befrest.initialize(this, 0, "", 1);
-        Log.d("APPCongif", "Befrest initialized");
+        Log.d(TAG, "initializing Befrest");
+        Befrest.initialize(this, APP_ID, AUTH, USER_ID);
     }
 }

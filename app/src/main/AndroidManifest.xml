@@ -30,7 +30,6 @@
         </activity>
 
         <service android:name=".befrest.PushService" />
-        <service android:name=".befrest.TestService" />
 
         <receiver
             android:name=".app.MyBroadcastReceiver"

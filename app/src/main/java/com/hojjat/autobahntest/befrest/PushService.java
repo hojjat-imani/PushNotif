@@ -27,16 +27,21 @@ public class PushService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        connectionUrl = intent.getStringExtra(Befrest.Util.CONNECTION_URL);
+        connectionUrl = Befrest.Util.getConnectionUri();
         connectIfNeeded();
-        return START_REDELIVER_INTENT;
+        return START_STICKY;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        startService(new Intent(this, PushService.class));
     }
 
     private void connectIfNeeded() {
         boolean isConntectedToInternet = Befrest.Util.isConnectedToInternet(this);
         if (!mConnection.isConnected() && isConntectedToInternet)
                 connect();
-
     }
 
     private void terminateConnection() {

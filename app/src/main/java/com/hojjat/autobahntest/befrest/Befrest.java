@@ -1,7 +1,6 @@
 package com.hojjat.autobahntest.befrest;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -14,16 +13,15 @@ import java.util.Locale;
 public class Befrest {
     static String TAG = "Befrest";
     private static Context context;
-    private static int UID;
+    private static int U_ID;
     private static String AUTH;
-    private static long CHID;
-    private static Class<? extends BefrestCallbacks> callbacks;
+    private static long CH_ID;
 
     public static void initialize(Context context, int APP_ID, String AUTH, long USER_ID){
         Befrest.context = context;
-        Befrest.UID = APP_ID;
+        Befrest.U_ID = APP_ID;
         Befrest.AUTH = AUTH;
-        Befrest.CHID = USER_ID;
+        Befrest.CH_ID = USER_ID;
         storeConstants();
         startPushService();
     }
@@ -35,7 +33,6 @@ public class Befrest {
     private static void startPushService(){
         //start service
         Log.d(TAG, "starting test service");
-        context.startService(new Intent(context, TestService.class));
     }
 
     private static void retrieveConstants(){
@@ -48,7 +45,7 @@ public class Befrest {
     }
 
     static class Util {
-        protected static final String U_ID = "UID";
+        protected static final String U_ID = "U_ID";
         protected static final String CH_ID = "CH_ID";
         protected static final String AUTH = "AUTH";
         protected static final String CONNECTION_URL = "CONNECTION_URL";
@@ -64,8 +61,8 @@ public class Befrest {
             return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         }
 
-        protected static String getConnectionUri(long CH_ID, int U_ID, String AUTH){
-            return String.format(Locale.US, "ws://gw.bef.rest:8000/sub?chid=%d&uid=%d&auth=%s", CH_ID, U_ID, AUTH);
+        protected static String getConnectionUri(){
+            return String.format(Locale.US, "ws://gw.bef.rest:8000/sub?chid=%d&uid=%d&auth=%s", Befrest.CH_ID, Befrest.U_ID, Befrest.U_ID);
         }
 
         protected static String getBroadcastSendingPermission(Context context){
