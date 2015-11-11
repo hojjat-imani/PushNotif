@@ -1,4 +1,4 @@
-package com.oddrun.befrestExample;
+package com.oddrun.befrest;
 
 import org.junit.Test;
 

@@ -1,10 +1,9 @@
-package com.hojjat.autobahntest.befrest;
+package com.oddrun.befrest;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 
 /**
  * Created by ehsan on 11/11/2015.

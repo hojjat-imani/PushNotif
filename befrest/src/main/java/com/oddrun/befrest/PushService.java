@@ -1,10 +1,9 @@
-package com.hojjat.autobahntest.befrest;
+package com.oddrun.befrest;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import de.tavendo.autobahn.WebSocketConnection;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.hojjat.autobahntest">
+    package="com.oddrun.befrestExample">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -8,18 +8,18 @@
 
     <!--change following using your app package name-->
     <permission android:protectionLevel="signature"
-        android:name="com.hojjat.autobahntest.permission.PUSH_SERVICE" />
+        android:name="com.oddrun.befrestExample.permission.PUSH_SERVICE" />
     <uses-permission android:name="com.hojjat.autobahntest.permission.PUSH_SERVICE" />
 
     <application
-        android:name=".app.ApplicationConfig"
+        android:name="com.oddrun.befrestExample.ApplicationConfig"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".app.ActivityMain"
+            android:name="com.oddrun.befrestExample.ActivityMain"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -29,10 +29,10 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".befrest.PushService" />
+        <service android:name="com.oddrun.befrest.PushService" />
 
         <receiver
-            android:name=".app.MyBroadcastReceiver"
+            android:name="com.oddrun.befrestExample.MyBroadcastReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.oddrun.befrest.broadcasts.PUSH_RECEIVED" />

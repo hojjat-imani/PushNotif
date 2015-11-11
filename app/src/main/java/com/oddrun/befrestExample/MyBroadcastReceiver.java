@@ -1,10 +1,11 @@
-package com.hojjat.autobahntest.app;
+package com.oddrun.befrestExample;
 
 import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.hojjat.autobahntest.befrest.BefrestPushBroadcastReceiver;
+import com.oddrun.befrest.BefrestPushBroadcastReceiver;
+
 
 /**
  * Created by ehsan on 11/11/2015.

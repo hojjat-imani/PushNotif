@@ -1,10 +1,11 @@
-package com.hojjat.autobahntest.app;
+package com.oddrun.befrestExample;
 
 import android.app.Application;
 import android.util.Base64;
 import android.util.Log;
 
-import com.hojjat.autobahntest.befrest.Befrest;
+
+import com.oddrun.befrest.Befrest;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,7 +27,7 @@ public class ApplicationConfig extends Application {
         super.onCreate();
         Log.d(TAG, "initializing Befrest");
         Log.d(TAG, "AUTH: " + AUTH);
-        Befrest.initialize(this, APP_ID, AUTH , USER_ID);
+        Befrest.initialize(this, APP_ID, AUTH, USER_ID);
     }
 
     private static String sign() {
