@@ -13,6 +13,6 @@ public class MyBroadcastReceiver extends BefrestPushBroadcastReceiver {
     @Override
     public void onPushReceived(Context context, String message) {
         Log.d("MReceiver", "onPUshReceive");
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
     }
 }

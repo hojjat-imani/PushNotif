@@ -1,6 +1,7 @@
 package com.hojjat.autobahntest.befrest;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
@@ -17,42 +18,39 @@ public class Befrest {
     private static String AUTH;
     private static long CH_ID;
 
-    public static void initialize(Context context, int APP_ID, String AUTH, long USER_ID){
+    public static void initialize(Context context, int APP_ID, String AUTH, long USER_ID) {
         Befrest.context = context;
         Befrest.U_ID = APP_ID;
         Befrest.AUTH = AUTH;
         Befrest.CH_ID = USER_ID;
-        storeConstants();
         startPushService();
     }
 
-    private static void storeConstants(){
-        //write cons to prefs
+    private static boolean stopFormerServiceIfExist(Context context) {
+        return context.stopService(new Intent(context, PushService.class));
     }
 
-    private static void startPushService(){
-        //start service
-        Log.d(TAG, "starting test service");
+    public static void reInitialize(Context context, int APP_ID, String AUTH, long USER_ID) {
+        /* only a wrapper of initialize for clarity
+        initialize can be used for re initializing
+        */
+        initialize(context, APP_ID, AUTH, USER_ID);
     }
 
-    private static void retrieveConstants(){
-        //read cons from prefs
-    }
-
-    private static void onDeviceBootCompleted(){
-        retrieveConstants();
-        startPushService();
+    private static void startPushService() {
+        Log.d(TAG, "starting PushService");
+        if (stopFormerServiceIfExist(context)) {
+            //service was running and stopped
+            //no need to start the service again as it starts itself in onDestroy()
+        } else {
+            context.startService(new Intent(context, PushService.class));
+        }
     }
 
     static class Util {
-        protected static final String U_ID = "U_ID";
-        protected static final String CH_ID = "CH_ID";
-        protected static final String AUTH = "AUTH";
-        protected static final String CONNECTION_URL = "CONNECTION_URL";
-        protected static final String BEFREST_PREFRENCES = "BEFREST_PREFRENCES";
         protected static final String ACTION_PUSH_RECIEVED = "com.oddrun.befrest.broadcasts.PUSH_RECEIVED";
         protected static final String KEY_MESSAGE_PASSED = "KEY_MESSAGE_PASSED";
-        private static final String BROADCAST_SENDING_PERMISSION_POSTFIX =".permission.PUSH_SERVICE";
+        private static final String BROADCAST_SENDING_PERMISSION_POSTFIX = ".permission.PUSH_SERVICE";
 
 
         protected static boolean isConnectedToInternet(Context context) {
@@ -61,11 +59,11 @@ public class Befrest {
             return activeNetwork != null && activeNetwork.isConnectedOrConnecting();
         }
 
-        protected static String getConnectionUri(){
-            return String.format(Locale.US, "ws://gw.bef.rest:8000/sub?chid=%d&uid=%d&auth=%s", Befrest.CH_ID, Befrest.U_ID, Befrest.U_ID);
+        protected static String getConnectionUri() {
+            return String.format(Locale.US, "ws://gw.bef.rest:8000/sub?chid=%d&uid=%d&auth=%s", Befrest.CH_ID, Befrest.U_ID, Befrest.AUTH);
         }
 
-        protected static String getBroadcastSendingPermission(Context context){
+        protected static String getBroadcastSendingPermission(Context context) {
             return context.getApplicationContext().getPackageName() + BROADCAST_SENDING_PERMISSION_POSTFIX;
         }
     }

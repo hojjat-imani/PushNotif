@@ -57,10 +57,10 @@ public class PushService extends Service {
                 }
 
                 @Override
-                public void onTextMessage(String payload) {
-                    Log.d(TAG, "Got notif: " + payload);
+                public void onTextMessage(String message) {
+                    Log.d(TAG, "Got notif: " + message);
                     Bundle bundle = new Bundle();
-                    bundle.putString("Data", payload);
+                    bundle.putString(Befrest.Util.KEY_MESSAGE_PASSED, message);
                     sendBefrestBroadcast(Befrest.Util.ACTION_PUSH_RECIEVED, bundle);
                 }
 
@@ -69,6 +69,7 @@ public class PushService extends Service {
                     Log.d(TAG, "Connection lost. Code: " + code + ", Reason: " + reason);
                     // RECONNECT POLICY GOES HERE
                 }
+
             });
         } catch (WebSocketException e) {
             e.printStackTrace();
@@ -79,6 +80,6 @@ public class PushService extends Service {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtras(extras);
-        sendBroadcast(intent);
+        sendBroadcast(intent, Befrest.Util.getBroadcastSendingPermission(this));
     }
 }

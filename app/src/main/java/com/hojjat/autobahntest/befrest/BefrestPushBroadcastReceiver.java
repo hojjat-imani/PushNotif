@@ -12,10 +12,9 @@ import android.util.Log;
 public abstract class BefrestPushBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("BefrestReceiver", "onreceive");
         String intentAction = intent.getAction();
         if(intentAction.equals(Befrest.Util.ACTION_PUSH_RECIEVED))
-            onPushReceived(context, intent.getStringExtra("Data"));
+            onPushReceived(context, intent.getStringExtra(Befrest.Util.KEY_MESSAGE_PASSED));
         Bundle extras = intent.getExtras();
     }
 
