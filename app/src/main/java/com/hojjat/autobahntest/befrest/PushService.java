@@ -2,7 +2,9 @@ package com.hojjat.autobahntest.befrest;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import de.tavendo.autobahn.WebSocketConnection;
@@ -27,7 +29,7 @@ public class PushService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         connectionUrl = intent.getStringExtra(Befrest.Util.CONNECTION_URL);
         connectIfNeeded();
-        return START_STICKY;
+        return START_REDELIVER_INTENT;
     }
 
     private void connectIfNeeded() {
@@ -52,7 +54,9 @@ public class PushService extends Service {
                 @Override
                 public void onTextMessage(String payload) {
                     Log.d(TAG, "Got notif: " + payload);
-
+                    Bundle bundle = new Bundle();
+                    bundle.putString("Data", payload);
+                    sendBefrestBroadcast(Befrest.Util.ACTION_PUSH_RECIEVED, bundle);
                 }
 
                 @Override
@@ -66,4 +70,10 @@ public class PushService extends Service {
         }
     }
 
+    private void sendBefrestBroadcast(String action, Bundle extras){
+        Intent intent = new Intent();
+        intent.setAction(action);
+        intent.putExtras(extras);
+        sendBroadcast(intent);
+    }
 }

@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.hojjat.autobahntest.befrest.Befrest;
 import com.hojjat.autobahntest.befrest.PushService;
 import com.hojjat.autobahntest.R;
 
@@ -24,9 +25,6 @@ public class ActivityMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        Log.d(TAG, "starting service");
-        startService(new Intent(this, PushService.class));
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
