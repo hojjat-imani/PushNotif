@@ -6,11 +6,9 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.nio.channels.SocketChannel;
-
-import de.tavendo.autobahn.WebSocketConnection;
-import de.tavendo.autobahn.WebSocketHandler;
-import de.tavendo.autobahn.WebSocketException;
+import com.oddrun.befrest.connectivity.WebSocketConnection;
+import com.oddrun.befrest.connectivity.WebSocketConnectionHandler;
+import com.oddrun.befrest.connectivity.WebSocketException;
 
 /**
  * Created by mblcdr on 4/22/15.
@@ -20,7 +18,7 @@ public class PushService extends Service {
     private final String TAG = "BefrestPushService";
     private String connectionUrl;
     private WebSocketConnection mConnection = new WebSocketConnection();
-    private WebSocketHandler handler = new WebSocketHandler() {
+    private WebSocketConnectionHandler handler = new WebSocketConnectionHandler() {
         @Override
         public void onOpen() {
             Log.d(TAG, "Befrest Connected");
@@ -75,8 +73,11 @@ public class PushService extends Service {
     }
 
     private void terminateConnection() {
-//        disconnecting does not working :|
         mConnection.disconnect();
+        //disconnect does not work properly :|
+        //connection remains open after disconnect
+        //so we make it null
+        mConnection = null;
     }
 
     private void connect() {

@@ -14,6 +14,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.oddrun.befrest.Befrest;
@@ -25,6 +26,7 @@ public class ActivityMain extends AppCompatActivity {
 
     TextView received;
     TextView count;
+    ScrollView scrollView;
 
     BroadcastReceiver receiver = new Receiver();
 
@@ -37,6 +39,7 @@ public class ActivityMain extends AppCompatActivity {
 
         received = (TextView) findViewById(R.id.received);
         count = (TextView) findViewById(R.id.count);
+        scrollView = (ScrollView) findViewById(R.id.scrollView);
 
         IntentFilter filter = new IntentFilter();
         filter.addAction("com.oddrun.befrest.broadcasts.PUSH_RECEIVED");
@@ -78,6 +81,12 @@ public class ActivityMain extends AppCompatActivity {
         public void onPushReceived(Context context, String message) {
             received.setText(received.getText() + "\n" + message);
             count.setText(Integer.parseInt(count.getText().toString()) + 1 + "");
+            scrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    scrollView.smoothScrollTo(0, scrollView.getBottom());
+                }
+            });
         }
     }
 }

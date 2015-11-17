@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/ByteBufferOutputStream.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/NoCopyByteArrayOutputStream.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/Utf8Validator.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WampReader.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WampWriter.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocket.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketConnection.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketConnectionHandler.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketException.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketMessage.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketOptions.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketReader.java" charset="windows-1252" />
+    <file url="file://$PROJECT_DIR$/befrest/src/main/java/com/oddrun/befrest/connectivity/WebSocketWriter.java" charset="windows-1252" />
     <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>
