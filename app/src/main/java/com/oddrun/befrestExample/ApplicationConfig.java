@@ -14,8 +14,8 @@ import java.security.NoSuchAlgorithmException;
  * Created by ehsan on 11/11/2015.
  */
 public class ApplicationConfig extends Application {
-    static final int APP_ID = 2;
-    static final int USER_ID = 917;
+    static final int APP_ID = 2; //uid
+    static final int USER_ID = 917; //chid
     static final String AUTH = sign();
 
     private static final String SHARED_KEY = "23e78b4b-079b-4556-aad0-beded33ed064";

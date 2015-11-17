@@ -1,6 +1,7 @@
 package com.oddrun.befrestExample;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -14,6 +15,6 @@ public class MyBroadcastReceiver extends BefrestPushBroadcastReceiver {
     @Override
     public void onPushReceived(Context context, String message) {
         Log.d("MReceiver", "onPUshReceive");
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
     }
 }

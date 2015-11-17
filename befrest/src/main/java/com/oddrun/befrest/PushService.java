@@ -20,6 +20,35 @@ public class PushService extends Service {
     private final String TAG = "BefrestPushService";
     private String connectionUrl;
     private WebSocketConnection mConnection = new WebSocketConnection();
+    private WebSocketHandler handler = new WebSocketHandler() {
+        @Override
+        public void onOpen() {
+            Log.d(TAG, "Befrest Connected");
+        }
+
+        @Override
+        public void onTextMessage(String message) {
+            if (Befrest.DEBUG) Log.d(TAG, "Got notif: " + message);
+            Bundle bundle = new Bundle();
+            bundle.putString(Befrest.Util.KEY_MESSAGE_PASSED, message);
+            sendBefrestBroadcast(Befrest.Util.ACTION_PUSH_RECIEVED, bundle);
+        }
+
+        @Override
+        public void onClose(int code, String reason) {
+            Log.d(TAG, "Connection lost. Code: " + code + ", Reason: " + reason);
+            // RECONNECT POLICY GOES HERE
+            //we must try to connect if the problem is from internet connection, server ,...
+            connectIfNeeded();
+            switch (code) {
+                case CLOSE_CANNOT_CONNECT:
+                case CLOSE_CONNECTION_LOST:
+                case CLOSE_INTERNAL_ERROR:
+                case CLOSE_NORMAL:
+                case CLOSE_PROTOCOL_ERROR:
+            }
+        }
+    };
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -36,55 +65,29 @@ public class PushService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        startService(new Intent(this, PushService.class));
+        terminateConnection();
     }
 
     private void connectIfNeeded() {
         boolean isConntectedToInternet = Befrest.Util.isConnectedToInternet(this);
         if (!mConnection.isConnected() && isConntectedToInternet)
-                connect();
+            connect();
     }
 
     private void terminateConnection() {
+//        disconnecting does not working :|
         mConnection.disconnect();
     }
 
     private void connect() {
         try {
-            mConnection.connect(connectionUrl, new WebSocketHandler() {
-                @Override
-                public void onOpen() {
-                    Log.d(TAG, "Status: Connected!");
-                }
-
-                @Override
-                public void onTextMessage(String message) {
-                    Log.d(TAG, "Got notif: " + message);
-                    Bundle bundle = new Bundle();
-                    bundle.putString(Befrest.Util.KEY_MESSAGE_PASSED, message);
-                    sendBefrestBroadcast(Befrest.Util.ACTION_PUSH_RECIEVED, bundle);
-                }
-
-                @Override
-                public void onClose(int code, String reason) {
-                    Log.d(TAG, "Connection lost. Code: " + code + ", Reason: " + reason);
-                    // RECONNECT POLICY GOES HERE
-                    //we must try to connect if the problem is from internet connection, server ,...
-                    switch (code){
-                        case CLOSE_CANNOT_CONNECT:
-                        case CLOSE_CONNECTION_LOST:
-                        case CLOSE_INTERNAL_ERROR:
-                        case CLOSE_NORMAL:
-                        case CLOSE_PROTOCOL_ERROR:
-                    }
-                }
-            });
+            mConnection.connect(connectionUrl, handler);
         } catch (WebSocketException e) {
             e.printStackTrace();
         }
     }
 
-    private void sendBefrestBroadcast(String action, Bundle extras){
+    private void sendBefrestBroadcast(String action, Bundle extras) {
         Intent intent = new Intent();
         intent.setAction(action);
         intent.putExtras(extras);
