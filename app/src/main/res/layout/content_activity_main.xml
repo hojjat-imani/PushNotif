@@ -14,6 +14,18 @@
     tools:context=".ActivityMain"
     tools:showIn="@layout/activity_main">
 
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/editText" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send"
+        android:id="@+id/send"
+        android:layout_gravity="center_horizontal" />
+
     <TextView
         android:id="@+id/count"
         android:layout_width="wrap_content"

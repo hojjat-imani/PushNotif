@@ -1,7 +1,11 @@
 package com.oddrun.befrest;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -18,6 +22,7 @@ public class PushService extends Service {
     private final String TAG = "BefrestPushService";
     private String connectionUrl;
     private WebSocketConnection mConnection = new WebSocketConnection();
+    private BroadcastReceiver broadCastReceiverConnectionStateChange;
     private WebSocketConnectionHandler handler = new WebSocketConnectionHandler() {
         @Override
         public void onOpen() {
@@ -27,23 +32,30 @@ public class PushService extends Service {
         @Override
         public void onTextMessage(String message) {
             if (Befrest.DEBUG) Log.d(TAG, "Got notif: " + message);
-            Bundle bundle = new Bundle();
+            Bundle bundle = new Bundle(1);
             bundle.putString(Befrest.Util.KEY_MESSAGE_PASSED, message);
-            sendBefrestBroadcast(Befrest.Util.ACTION_PUSH_RECIEVED, bundle);
+            sendBefrestBroadcast(Befrest.ACTION_PUSH_RECIEVED, bundle);
         }
 
         @Override
         public void onClose(int code, String reason) {
             Log.d(TAG, "Connection lost. Code: " + code + ", Reason: " + reason);
-            // RECONNECT POLICY GOES HERE
-            //we must try to connect if the problem is from internet connection, server ,...
-            connectIfNeeded();
             switch (code) {
+                case CLOSE_UNAUTHORIZED:
+                    sendBefrestBroadcast(Befrest.Util.ACTION_UNAUTHORIZED);
+                    terminateConnection();
+                    stopSelf();
+                    break;
+                case CLOSE_RECONNECT:
+                    //reconnection handled in autobahn
+                    break;
                 case CLOSE_CANNOT_CONNECT:
                 case CLOSE_CONNECTION_LOST:
                 case CLOSE_INTERNAL_ERROR:
                 case CLOSE_NORMAL:
                 case CLOSE_PROTOCOL_ERROR:
+                case CLOSE_SERVER_ERROR:
+                    reconnectIfNeeded();
             }
         }
     };
@@ -51,6 +63,22 @@ public class PushService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        registerConnectionStatusChangeBroadcastReceiver();
+    }
+
+    private void registerConnectionStatusChangeBroadcastReceiver() {
+        broadCastReceiverConnectionStateChange = new BroadcastReceiver(){
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                connectIfNeeded();
+            }
+        };
+        registerReceiver(broadCastReceiverConnectionStateChange, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
     }
 
     @Override
@@ -64,12 +92,19 @@ public class PushService extends Service {
     public void onDestroy() {
         super.onDestroy();
         terminateConnection();
+        unregisterReceiver(broadCastReceiverConnectionStateChange);
     }
 
     private void connectIfNeeded() {
         boolean isConntectedToInternet = Befrest.Util.isConnectedToInternet(this);
         if (!mConnection.isConnected() && isConntectedToInternet)
             connect();
+    }
+
+    private void reconnectIfNeeded(){
+        boolean isConntectedToInternet = Befrest.Util.isConnectedToInternet(this);
+        if (!mConnection.isConnected() && isConntectedToInternet)
+            mConnection.reconnect();
     }
 
     private void terminateConnection() {
@@ -89,10 +124,13 @@ public class PushService extends Service {
     }
 
     private void sendBefrestBroadcast(String action, Bundle extras) {
-        Intent intent = new Intent();
-        intent.setAction(action);
+        Intent intent = new Intent(action);
         intent.putExtras(extras);
-        Log.d(TAG, "broadcast sent - permission : " + Befrest.Util.getBroadcastSendingPermission(this));
+        sendBroadcast(intent, Befrest.Util.getBroadcastSendingPermission(this));
+    }
+
+    private void sendBefrestBroadcast(String action) {
+        Intent intent = new Intent(action);
         sendBroadcast(intent, Befrest.Util.getBroadcastSendingPermission(this));
     }
 }

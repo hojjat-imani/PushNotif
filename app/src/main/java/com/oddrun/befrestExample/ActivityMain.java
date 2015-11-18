@@ -27,6 +27,8 @@ public class ActivityMain extends AppCompatActivity {
     TextView received;
     TextView count;
     ScrollView scrollView;
+    Button send;
+    EditText editText;
 
     BroadcastReceiver receiver = new Receiver();
 
@@ -40,11 +42,19 @@ public class ActivityMain extends AppCompatActivity {
         received = (TextView) findViewById(R.id.received);
         count = (TextView) findViewById(R.id.count);
         scrollView = (ScrollView) findViewById(R.id.scrollView);
+        send = (Button) findViewById(R.id.send);
+        editText = (EditText) findViewById(R.id.editText);
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction("com.oddrun.befrest.broadcasts.PUSH_RECEIVED");
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        registerReceiver(receiver, filter);
+        send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Befrest.sendMessage(editText.getText().toString());
+            }
+        });
+//        for(int i = 0 ; i < 500; i++){
+//            Befrest.sendMessage("" + i);
+//        }
+        registerReceiver(receiver, new IntentFilter(Befrest.ACTION_PUSH_RECIEVED));
     }
 
     @Override
@@ -87,6 +97,11 @@ public class ActivityMain extends AppCompatActivity {
                     scrollView.smoothScrollTo(0, scrollView.getBottom());
                 }
             });
+        }
+
+        @Override
+        public void onAuthorizeProblem(Context context) {
+            // re initial
         }
     }
 }

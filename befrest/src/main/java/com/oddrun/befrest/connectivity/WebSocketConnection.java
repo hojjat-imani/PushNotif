@@ -23,13 +23,14 @@ import java.net.URISyntaxException;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 
-import org.apache.http.message.BasicNameValuePair;
 
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+
+import org.apache.http.message.BasicNameValuePair;
 
 
 public class WebSocketConnection implements WebSocket {
@@ -38,7 +39,6 @@ public class WebSocketConnection implements WebSocket {
     private static final String TAG = WebSocketConnection.class.getName();
 
     protected Handler mMasterHandler;
-
     protected WebSocketReader mReader;
     protected WebSocketWriter mWriter;
     protected HandlerThread mWriterThread;
@@ -305,6 +305,7 @@ public class WebSocketConnection implements WebSocket {
 
     /**
      * Reconnect to the server with the latest options
+     *
      * @return true if reconnection performed
      */
     public boolean reconnect() {
@@ -345,15 +346,15 @@ public class WebSocketConnection implements WebSocket {
     /**
      * Common close handler
      *
-     * @param code       Close code.
-     * @param reason     Close reason (human-readable).
+     * @param code   Close code.
+     * @param reason Close reason (human-readable).
      */
     private void onClose(int code, String reason) {
         boolean reconnecting = false;
 
         if ((code == ConnectionHandler.CLOSE_CANNOT_CONNECT) ||
                 (code == ConnectionHandler.CLOSE_CONNECTION_LOST)) {
-            reconnecting = scheduleReconnect();
+//            reconnecting = scheduleReconnect();
         }
 
 
@@ -490,7 +491,10 @@ public class WebSocketConnection implements WebSocket {
                 } else if (msg.obj instanceof WebSocketMessage.ServerError) {
 
                     WebSocketMessage.ServerError error = (WebSocketMessage.ServerError) msg.obj;
-                    failConnection(WebSocketConnectionHandler.CLOSE_SERVER_ERROR, "Server error " + error.mStatusCode + " (" + error.mStatusMessage + ")");
+                    int errCode = WebSocketConnectionHandler.CLOSE_SERVER_ERROR;
+                    if (error.mStatusCode == 401)
+                        errCode = WebSocketConnectionHandler.CLOSE_UNAUTHORIZED; //hojjat
+                    failConnection(errCode, "Server error " + error.mStatusCode + " (" + error.mStatusMessage + ")");
 
                 } else {
 

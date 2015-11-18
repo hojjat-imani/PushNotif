@@ -18,8 +18,11 @@ public abstract class BefrestPushBroadcastReceiver extends BroadcastReceiver {
         String intentAction = intent.getAction();
         if (Befrest.DEBUG) Log.d(TAG, "BroadCastReceived : " + intentAction);
         switch (intentAction) {
-            case Befrest.Util.ACTION_PUSH_RECIEVED:
+            case Befrest.ACTION_PUSH_RECIEVED:
                 onPushReceived(context, intent.getStringExtra(Befrest.Util.KEY_MESSAGE_PASSED));
+                break;
+            case Befrest.Util.ACTION_UNAUTHORIZED:
+                onAuthorizeProblem(context);
                 break;
             case ConnectivityManager.CONNECTIVITY_ACTION:
                 startOrStopPushService(context);
@@ -29,8 +32,12 @@ public abstract class BefrestPushBroadcastReceiver extends BroadcastReceiver {
     private void startOrStopPushService(Context context) {
         if (Befrest.Util.isConnectedToInternet(context))
             Befrest.Util.startPushService(context);
-        else Befrest.Util.stopPushService(context);
+//        else Befrest.Util.stopPushService(context);
     }
 
     abstract public void onPushReceived(Context context, String message);
+
+    public void onAuthorizeProblem(Context context) {
+        Log.d(TAG, "Befrest : Authorization Problem!");
+    }
 }

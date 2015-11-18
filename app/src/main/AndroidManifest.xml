@@ -6,8 +6,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--change following using your app package name-->
-    <permission android:protectionLevel="signature"
-        android:name="com.oddrun.befrestExample.permission.PUSH_SERVICE" />
+    <permission
+        android:name="com.oddrun.befrestExample.permission.PUSH_SERVICE"
+        android:protectionLevel="signature" />
     <uses-permission android:name="com.oddrun.befrestExample.permission.PUSH_SERVICE" />
 
     <application
@@ -33,8 +34,8 @@
             android:name="com.oddrun.befrestExample.MyBroadcastReceiver"
             android:exported="false">
             <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
                 <action android:name="com.oddrun.befrest.broadcasts.PUSH_RECEIVED" />
+                <action android:name="com.oddrun.befrest.broadcasts.UNAUTHORIZED" />
             </intent-filter>
         </receiver>
     </application>

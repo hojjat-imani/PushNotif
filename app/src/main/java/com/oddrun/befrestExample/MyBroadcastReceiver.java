@@ -15,6 +15,11 @@ public class MyBroadcastReceiver extends BefrestPushBroadcastReceiver {
     @Override
     public void onPushReceived(Context context, String message) {
         Log.d("MReceiver", "onPUshReceive");
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onAuthorizeProblem(Context context) {
+        Log.d("MReceiver", "onAuthorizeProblem");
+        Toast.makeText(context, "UnAuthorized!!!", Toast.LENGTH_SHORT).show();
     }
 }
