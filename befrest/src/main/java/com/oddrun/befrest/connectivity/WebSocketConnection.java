@@ -17,6 +17,7 @@
 package com.oddrun.befrest.connectivity;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -133,7 +134,8 @@ public class WebSocketConnection implements WebSocket {
         if (DEBUG) Log.d(TAG, "created");
 
         // create WebSocket master handler
-        createHandler();
+//        createHandler();
+        mMasterHandler = new MasterHandler(new WeakReference<WebSocketConnection>(this));
 
         // set initial values
         mActive = false;
@@ -162,9 +164,7 @@ public class WebSocketConnection implements WebSocket {
 
 
     private void failConnection(int code, String reason) {
-
         if (DEBUG) Log.d(TAG, "fail connection [code = " + code + ", reason = " + reason);
-
         if (mReader != null) {
             mReader.quit();
             try {
@@ -172,20 +172,20 @@ public class WebSocketConnection implements WebSocket {
             } catch (InterruptedException e) {
                 if (DEBUG) e.printStackTrace();
             }
-            //mReader = null;
+            mReader = null;
         } else {
             if (DEBUG) Log.d(TAG, "mReader already NULL");
         }
 
         if (mWriter != null) {
-            //mWriterThread.getLooper().quit();
             mWriter.forward(new WebSocketMessage.Quit());
             try {
                 mWriterThread.join();
             } catch (InterruptedException e) {
                 if (DEBUG) e.printStackTrace();
             }
-            //mWriterThread = null;
+            mWriter = null;
+            mWriterThread = null;
         } else {
             if (DEBUG) Log.d(TAG, "mWriter already NULL");
         }
@@ -196,7 +196,7 @@ public class WebSocketConnection implements WebSocket {
             } catch (IOException e) {
                 if (DEBUG) e.printStackTrace();
             }
-            //mTransportChannel = null;
+            mTransportChannel = null;
         } else {
             if (DEBUG) Log.d(TAG, "mTransportChannel already NULL");
         }
@@ -289,18 +289,44 @@ public class WebSocketConnection implements WebSocket {
 
 
     public void disconnect() {
-        if (mWriter != null) {
-            mWriter.forward(new WebSocketMessage.Close(1000));
-        } else {
-            if (DEBUG) Log.d(TAG, "could not send Close .. writer already NULL");
-        }
-        if (mReader != null) {
-            mReader.quit();
-        } else {
-            if (DEBUG) Log.d(TAG, "could not send Close .. reader already NULL");
-        }
         mActive = false;
         mPrevConnected = false;
+        if (mReader != null) {
+            mReader.quit();
+            try {
+                mReader.join();
+            } catch (InterruptedException e) {
+                if (DEBUG) e.printStackTrace();
+            }
+            mReader = null;
+        } else {
+            if (DEBUG) Log.d(TAG, "mReader already NULL");
+        }
+
+        if (mWriter != null) {
+            mWriter.forward(new WebSocketMessage.Quit());
+            try {
+                mWriterThread.join();
+            } catch (InterruptedException e) {
+                if (DEBUG) e.printStackTrace();
+            }
+            mWriter = null;
+            mWriterThread = null;
+        } else {
+            if (DEBUG) Log.d(TAG, "mWriter already NULL");
+        }
+
+        if (mTransportChannel != null) {
+            try {
+                mTransportChannel.close();
+            } catch (IOException e) {
+                if (DEBUG) e.printStackTrace();
+            }
+            mTransportChannel = null;
+        } else {
+            if (DEBUG) Log.d(TAG, "mTransportChannel already NULL");
+        }
+        if(DEBUG) Log.d(TAG, "disconnected");
     }
 
     /**
@@ -378,133 +404,130 @@ public class WebSocketConnection implements WebSocket {
     /**
      * Create master message handler.
      */
-    protected void createHandler() {
-
-        mMasterHandler = new Handler(Looper.getMainLooper()) {
-
-            public void handleMessage(Message msg) {
-
-                if (msg.obj instanceof WebSocketMessage.TextMessage) {
-
-                    WebSocketMessage.TextMessage textMessage = (WebSocketMessage.TextMessage) msg.obj;
-
-                    if (mWsHandler != null) {
-                        mWsHandler.onTextMessage(textMessage.mPayload);
-                    } else {
-                        if (DEBUG)
-                            Log.d(TAG, "could not call onTextMessage() .. handler already NULL");
-                    }
-
-                } else if (msg.obj instanceof WebSocketMessage.RawTextMessage) {
-
-                    WebSocketMessage.RawTextMessage rawTextMessage = (WebSocketMessage.RawTextMessage) msg.obj;
-
-                    if (mWsHandler != null) {
-                        mWsHandler.onRawTextMessage(rawTextMessage.mPayload);
-                    } else {
-                        if (DEBUG)
-                            Log.d(TAG, "could not call onRawTextMessage() .. handler already NULL");
-                    }
-
-                } else if (msg.obj instanceof WebSocketMessage.BinaryMessage) {
-
-                    WebSocketMessage.BinaryMessage binaryMessage = (WebSocketMessage.BinaryMessage) msg.obj;
-
-                    if (mWsHandler != null) {
-                        mWsHandler.onBinaryMessage(binaryMessage.mPayload);
-                    } else {
-                        if (DEBUG)
-                            Log.d(TAG, "could not call onBinaryMessage() .. handler already NULL");
-                    }
-
-                } else if (msg.obj instanceof WebSocketMessage.Ping) {
-
-                    WebSocketMessage.Ping ping = (WebSocketMessage.Ping) msg.obj;
-                    if (DEBUG) Log.d(TAG, "WebSockets Ping received");
-
-                    // reply with Pong
-                    WebSocketMessage.Pong pong = new WebSocketMessage.Pong();
-                    pong.mPayload = ping.mPayload;
-                    mWriter.forward(pong);
-
-                } else if (msg.obj instanceof WebSocketMessage.Pong) {
-
-                    @SuppressWarnings("unused")
-                    WebSocketMessage.Pong pong = (WebSocketMessage.Pong) msg.obj;
-
-                    if (DEBUG) Log.d(TAG, "WebSockets Pong received");
-
-                } else if (msg.obj instanceof WebSocketMessage.Close) {
-
-                    WebSocketMessage.Close close = (WebSocketMessage.Close) msg.obj;
-
-                    if (DEBUG)
-                        Log.d(TAG, "WebSockets Close received (" + close.mCode + " - " + close.mReason + ")");
-
-                    final int tavendoCloseCode = (close.mCode == 1000) ? ConnectionHandler.CLOSE_NORMAL : ConnectionHandler.CLOSE_CONNECTION_LOST;
-
-                    if (mActive) {
-                        mWriter.forward(new WebSocketMessage.Close(1000));
-                    } else {
-                        // we've initiated disconnect, so ready to close the channel
-                        try {
-                            mTransportChannel.close();
-                        } catch (IOException e) {
-                            if (DEBUG) e.printStackTrace();
-                        }
-                    }
-
-                    onClose(tavendoCloseCode, close.mReason);
-
-                } else if (msg.obj instanceof WebSocketMessage.ServerHandshake) {
-
-                    WebSocketMessage.ServerHandshake serverHandshake = (WebSocketMessage.ServerHandshake) msg.obj;
-
-                    if (DEBUG) Log.d(TAG, "opening handshake received");
-
-                    if (serverHandshake.mSuccess) {
-                        if (mWsHandler != null) {
-                            mWsHandler.onOpen();
-                        } else {
-                            if (DEBUG)
-                                Log.d(TAG, "could not call onOpen() .. handler already NULL");
-                        }
-                    }
-
-                } else if (msg.obj instanceof WebSocketMessage.ConnectionLost) {
-
-                    @SuppressWarnings("unused")
-                    WebSocketMessage.ConnectionLost connnectionLost = (WebSocketMessage.ConnectionLost) msg.obj;
-                    failConnection(WebSocketConnectionHandler.CLOSE_CONNECTION_LOST, "WebSockets connection lost");
-
-                } else if (msg.obj instanceof WebSocketMessage.ProtocolViolation) {
-
-                    @SuppressWarnings("unused")
-                    WebSocketMessage.ProtocolViolation protocolViolation = (WebSocketMessage.ProtocolViolation) msg.obj;
-                    failConnection(WebSocketConnectionHandler.CLOSE_PROTOCOL_ERROR, "WebSockets protocol violation");
-
-                } else if (msg.obj instanceof WebSocketMessage.Error) {
-
-                    WebSocketMessage.Error error = (WebSocketMessage.Error) msg.obj;
-                    failConnection(WebSocketConnectionHandler.CLOSE_INTERNAL_ERROR, "WebSockets internal error (" + error.mException.toString() + ")");
-
-                } else if (msg.obj instanceof WebSocketMessage.ServerError) {
-
-                    WebSocketMessage.ServerError error = (WebSocketMessage.ServerError) msg.obj;
-                    int errCode = WebSocketConnectionHandler.CLOSE_SERVER_ERROR;
-                    if (error.mStatusCode == 401)
-                        errCode = WebSocketConnectionHandler.CLOSE_UNAUTHORIZED; //hojjat
-                    failConnection(errCode, "Server error " + error.mStatusCode + " (" + error.mStatusMessage + ")");
-
-                } else {
-
-                    processAppMessage(msg.obj);
-
-                }
-            }
-        };
-    }
-
+    /**
+     * protected void createHandler() {
+     * <p/>
+     * mMasterHandler = new Handler(Looper.getMainLooper()) {
+     * <p/>
+     * public void handleMessage(Message msg) {
+     * <p/>
+     * if (msg.obj instanceof WebSocketMessage.TextMessage) {
+     * <p/>
+     * WebSocketMessage.TextMessage textMessage = (WebSocketMessage.TextMessage) msg.obj;
+     * <p/>
+     * <p/>
+     * if (mWsHandler != null) {
+     * mWsHandler.onTextMessage(textMessage.mPayload);
+     * } else {
+     * if (DEBUG)
+     * Log.d(TAG, "could not call onTextMessage() .. handler already NULL");
+     * }
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.RawTextMessage) {
+     * <p/>
+     * WebSocketMessage.RawTextMessage rawTextMessage = (WebSocketMessage.RawTextMessage) msg.obj;
+     * <p/>
+     * if (mWsHandler != null) {
+     * mWsHandler.onRawTextMessage(rawTextMessage.mPayload);
+     * } else {
+     * if (DEBUG)
+     * Log.d(TAG, "could not call onRawTextMessage() .. handler already NULL");
+     * }
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.BinaryMessage) {
+     * <p/>
+     * WebSocketMessage.BinaryMessage binaryMessage = (WebSocketMessage.BinaryMessage) msg.obj;
+     * <p/>
+     * if (mWsHandler != null) {
+     * mWsHandler.onBinaryMessage(binaryMessage.mPayload);
+     * } else {
+     * if (DEBUG)
+     * Log.d(TAG, "could not call onBinaryMessage() .. handler already NULL");
+     * }
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.Ping) {
+     * <p/>
+     * WebSocketMessage.Ping ping = (WebSocketMessage.Ping) msg.obj;
+     * if (DEBUG) Log.d(TAG, "WebSockets Ping received");
+     * <p/>
+     * // reply with Pong
+     * WebSocketMessage.Pong pong = new WebSocketMessage.Pong();
+     * pong.mPayload = ping.mPayload;
+     * mWriter.forward(pong);
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.Pong) {
+     *
+     * @SuppressWarnings("unused") WebSocketMessage.Pong pong = (WebSocketMessage.Pong) msg.obj;
+     * <p/>
+     * if (DEBUG) Log.d(TAG, "WebSockets Pong received");
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.Close) {
+     * <p/>
+     * WebSocketMessage.Close close = (WebSocketMessage.Close) msg.obj;
+     * <p/>
+     * if (DEBUG)
+     * Log.d(TAG, "WebSockets Close received (" + close.mCode + " - " + close.mReason + ")");
+     * <p/>
+     * final int tavendoCloseCode = (close.mCode == 1000) ? ConnectionHandler.CLOSE_NORMAL : ConnectionHandler.CLOSE_CONNECTION_LOST;
+     * <p/>
+     * if (mActive) {
+     * mWriter.forward(new WebSocketMessage.Close(1000));
+     * } else {
+     * // we've initiated disconnect, so ready to close the channel
+     * try {
+     * mTransportChannel.close();
+     * } catch (IOException e) {
+     * if (DEBUG) e.printStackTrace();
+     * }
+     * }
+     * <p/>
+     * onClose(tavendoCloseCode, close.mReason);
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.ServerHandshake) {
+     * <p/>
+     * WebSocketMessage.ServerHandshake serverHandshake = (WebSocketMessage.ServerHandshake) msg.obj;
+     * <p/>
+     * if (DEBUG) Log.d(TAG, "opening handshake received");
+     * <p/>
+     * if (serverHandshake.mSuccess) {
+     * if (mWsHandler != null) {
+     * mWsHandler.onOpen();
+     * } else {
+     * if (DEBUG)
+     * Log.d(TAG, "could not call onOpen() .. handler already NULL");
+     * }
+     * }
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.ConnectionLost) {
+     * @SuppressWarnings("unused") WebSocketMessage.ConnectionLost connnectionLost = (WebSocketMessage.ConnectionLost) msg.obj;
+     * failConnection(WebSocketConnectionHandler.CLOSE_CONNECTION_LOST, "WebSockets connection lost");
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.ProtocolViolation) {
+     * @SuppressWarnings("unused") WebSocketMessage.ProtocolViolation protocolViolation = (WebSocketMessage.ProtocolViolation) msg.obj;
+     * failConnection(WebSocketConnectionHandler.CLOSE_PROTOCOL_ERROR, "WebSockets protocol violation");
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.Error) {
+     * <p/>
+     * WebSocketMessage.Error error = (WebSocketMessage.Error) msg.obj;
+     * failConnection(WebSocketConnectionHandler.CLOSE_INTERNAL_ERROR, "WebSockets internal error (" + error.mException.toString() + ")");
+     * <p/>
+     * } else if (msg.obj instanceof WebSocketMessage.ServerError) {
+     * <p/>
+     * WebSocketMessage.ServerError error = (WebSocketMessage.ServerError) msg.obj;
+     * int errCode = WebSocketConnectionHandler.CLOSE_SERVER_ERROR;
+     * if (error.mStatusCode == 401)
+     * errCode = WebSocketConnectionHandler.CLOSE_UNAUTHORIZED; //hojjat
+     * failConnection(errCode, "Server error " + error.mStatusCode + " (" + error.mStatusMessage + ")");
+     * <p/>
+     * } else {
+     * <p/>
+     * processAppMessage(msg.obj);
+     * <p/>
+     * }
+     * }
+     * };
+     * }
+     */
 
     protected void processAppMessage(Object message) {
     }
@@ -514,7 +537,6 @@ public class WebSocketConnection implements WebSocket {
      * Create WebSockets background writer.
      */
     protected void createWriter() {
-
         mWriterThread = new HandlerThread("WebSocketWriter");
         mWriterThread.start();
         mWriter = new WebSocketWriter(mWriterThread.getLooper(), mMasterHandler, mTransportChannel, mOptions);
@@ -530,7 +552,136 @@ public class WebSocketConnection implements WebSocket {
 
         mReader = new WebSocketReader(mMasterHandler, mTransportChannel, mOptions, "WebSocketReader");
         mReader.start();
-
         if (DEBUG) Log.d(TAG, "WS reader created and started");
+    }
+
+    private static class MasterHandler extends Handler {
+        WebSocketConnection wsConnection;
+
+        public MasterHandler(WeakReference<WebSocketConnection> weakReference) {
+            super(Looper.getMainLooper());
+            wsConnection = weakReference.get();
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+
+            if (msg.obj instanceof WebSocketMessage.TextMessage) {
+
+                WebSocketMessage.TextMessage textMessage = (WebSocketMessage.TextMessage) msg.obj;
+
+                if (wsConnection.mWsHandler != null) {
+                    wsConnection.mWsHandler.onTextMessage(textMessage.mPayload);
+                } else {
+                    if (DEBUG)
+                        Log.d(TAG, "could not call onTextMessage() .. handler already NULL");
+                }
+
+            } else if (msg.obj instanceof WebSocketMessage.RawTextMessage) {
+
+                WebSocketMessage.RawTextMessage rawTextMessage = (WebSocketMessage.RawTextMessage) msg.obj;
+
+                if (wsConnection.mWsHandler != null) {
+                    wsConnection.mWsHandler.onRawTextMessage(rawTextMessage.mPayload);
+                } else {
+                    if (DEBUG)
+                        Log.d(TAG, "could not call onRawTextMessage() .. handler already NULL");
+                }
+
+            } else if (msg.obj instanceof WebSocketMessage.BinaryMessage) {
+
+                WebSocketMessage.BinaryMessage binaryMessage = (WebSocketMessage.BinaryMessage) msg.obj;
+
+                if (wsConnection.mWsHandler != null) {
+                    wsConnection.mWsHandler.onBinaryMessage(binaryMessage.mPayload);
+                } else {
+                    if (DEBUG)
+                        Log.d(TAG, "could not call onBinaryMessage() .. handler already NULL");
+                }
+
+            } else if (msg.obj instanceof WebSocketMessage.Ping) {
+
+                WebSocketMessage.Ping ping = (WebSocketMessage.Ping) msg.obj;
+                if (DEBUG) Log.d(TAG, "WebSockets Ping received");
+
+                // reply with Pong
+                WebSocketMessage.Pong pong = new WebSocketMessage.Pong();
+                pong.mPayload = ping.mPayload;
+                wsConnection.mWriter.forward(pong);
+
+            } else if (msg.obj instanceof WebSocketMessage.Pong) {
+
+                @SuppressWarnings("unused")
+                WebSocketMessage.Pong pong = (WebSocketMessage.Pong) msg.obj;
+
+                if (DEBUG) Log.d(TAG, "WebSockets Pong received");
+
+            } else if (msg.obj instanceof WebSocketMessage.Close) {
+
+                WebSocketMessage.Close close = (WebSocketMessage.Close) msg.obj;
+
+                if (DEBUG)
+                    Log.d(TAG, "WebSockets Close received (" + close.mCode + " - " + close.mReason + ")");
+
+                final int tavendoCloseCode = (close.mCode == 1000) ? ConnectionHandler.CLOSE_NORMAL : ConnectionHandler.CLOSE_CONNECTION_LOST;
+
+                if (wsConnection.mActive) {
+//                    wsConnection.mWriter.forward(new WebSocketMessage.Close(1000));
+                    wsConnection.disconnect();
+                } else {
+                    // we've initiated disconnect, so ready to close the channel
+//                    try {
+//                        wsConnection.mTransportChannel.close();
+//                    } catch (IOException e) {
+//                        if (DEBUG) e.printStackTrace();
+//                    }
+                }
+
+                wsConnection.onClose(tavendoCloseCode, close.mReason);
+
+            } else if (msg.obj instanceof WebSocketMessage.ServerHandshake) {
+
+                WebSocketMessage.ServerHandshake serverHandshake = (WebSocketMessage.ServerHandshake) msg.obj;
+
+                if (DEBUG) Log.d(TAG, "opening handshake received");
+
+                if (serverHandshake.mSuccess) {
+                    if (wsConnection.mWsHandler != null) {
+                        wsConnection.mWsHandler.onOpen();
+                    } else {
+                        if (DEBUG)
+                            Log.d(TAG, "could not call onOpen() .. handler already NULL");
+                    }
+                }
+
+            } else if (msg.obj instanceof WebSocketMessage.ConnectionLost) {
+
+                @SuppressWarnings("unused")
+                WebSocketMessage.ConnectionLost connnectionLost = (WebSocketMessage.ConnectionLost) msg.obj;
+                wsConnection.failConnection(WebSocketConnectionHandler.CLOSE_CONNECTION_LOST, "WebSockets connection lost");
+
+            } else if (msg.obj instanceof WebSocketMessage.ProtocolViolation) {
+
+                @SuppressWarnings("unused")
+                WebSocketMessage.ProtocolViolation protocolViolation = (WebSocketMessage.ProtocolViolation) msg.obj;
+                wsConnection.failConnection(WebSocketConnectionHandler.CLOSE_PROTOCOL_ERROR, "WebSockets protocol violation");
+
+            } else if (msg.obj instanceof WebSocketMessage.Error) {
+
+                WebSocketMessage.Error error = (WebSocketMessage.Error) msg.obj;
+                wsConnection.failConnection(WebSocketConnectionHandler.CLOSE_INTERNAL_ERROR, "WebSockets internal error (" + error.mException.toString() + ")");
+
+            } else if (msg.obj instanceof WebSocketMessage.ServerError) {
+
+                WebSocketMessage.ServerError error = (WebSocketMessage.ServerError) msg.obj;
+                int errCode = WebSocketConnectionHandler.CLOSE_SERVER_ERROR;
+                if (error.mStatusCode == 401)
+                    errCode = WebSocketConnectionHandler.CLOSE_UNAUTHORIZED; //hojjat
+                wsConnection.failConnection(errCode, "Server error " + error.mStatusCode + " (" + error.mStatusMessage + ")");
+
+            } else {
+                wsConnection.processAppMessage(msg.obj);
+            }
+        }
     }
 }

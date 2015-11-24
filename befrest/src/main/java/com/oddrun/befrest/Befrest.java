@@ -52,29 +52,21 @@ public class Befrest {
     private static int U_ID;
     private static String AUTH;
     private static long CH_ID;
+    private static boolean connectedBefore;
 
     public static void initialize(Context context, int APP_ID, String AUTH, long USER_ID) {
         Befrest.context = context;
         Befrest.U_ID = APP_ID;
         Befrest.AUTH = AUTH;
         Befrest.CH_ID = USER_ID;
-        runPushService();
-    }
-
-    private static boolean stopFormerServiceIfExist() {
-        return Util.stopPushService(context);
-    }
+        context.startService(new Intent(context, PushService.class).putExtra(PushService.CONNECT, true));    }
 
     public static void reInitialize(Context context, int APP_ID, String AUTH, long USER_ID) {
         /* only a wrapper of initialize for clarity.
         initialize can be used for re initializing
         */
+        //TODO : its wrong
         initialize(context, APP_ID, AUTH, USER_ID);
-    }
-
-    private static void runPushService() {
-        stopFormerServiceIfExist();
-        Util.startPushService(context);
     }
 
     protected static class Util {
@@ -114,16 +106,6 @@ public class Befrest {
             }
             return "";
         }
-
-        public static void startPushService(Context context) {
-            if (DEBUG) Log.d(TAG, "starting PushService");
-            context.startService(new Intent(context, PushService.class));
-        }
-
-        public static boolean stopPushService(Context context) {
-            if (DEBUG) Log.d(TAG, "stopping PushService");
-            return context.stopService(new Intent(context, PushService.class));
-        }
     }
 
     public static void sendMessage(String msg) {
@@ -142,10 +124,9 @@ public class Befrest {
                 List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
                 nameValuePairs.add(new BasicNameValuePair("", params[0]));
                 httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
 //                 Execute HTTP Post Request
                 HttpResponse response = httpclient.execute(httppost);
-
+                httpclient.getConnectionManager().shutdown();
                 Log.d(TAG, "response " + response.getStatusLine());
             } catch (ClientProtocolException e) {
                 // TODO Auto-generated catch block

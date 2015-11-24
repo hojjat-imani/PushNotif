@@ -39,16 +39,7 @@ public abstract class BefrestPushBroadcastReceiver extends BroadcastReceiver {
                 break;
             case Befrest.Util.ACTION_UNAUTHORIZED:
                 onAuthorizeProblem(context);
-                break;
-            case ConnectivityManager.CONNECTIVITY_ACTION:
-                startOrStopPushService(context);
         }
-    }
-
-    private void startOrStopPushService(Context context) {
-        if (Befrest.Util.isConnectedToInternet(context))
-            Befrest.Util.startPushService(context);
-//        else Befrest.Util.stopPushService(context);
     }
 
     abstract public void onPushReceived(Context context, String message);
