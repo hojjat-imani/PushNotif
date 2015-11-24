@@ -16,7 +16,7 @@ ext {
     siteUrl = 'https://github.com/hojjat-imani/PushNotif'
     gitUrl = 'https://github.com/hojjat-imani/PushNotif.git'
 
-    libraryVersion = '0.0.2'
+    libraryVersion = '0.0.3'
 
     developerId = 'hojjat-imani'
     developerName = 'Hojjat Imani'
@@ -39,7 +39,7 @@ android {
         minSdkVersion 10
         targetSdkVersion 23
         versionCode 0
-        versionName "0.0.2"
+        versionName "0.0.3"
     }
     buildTypes {
         release {

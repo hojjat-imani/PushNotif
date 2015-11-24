@@ -28,7 +28,6 @@ public class ApplicationConfig extends Application {
         Log.d(TAG, "initializing Befrest");
         Log.d(TAG, "AUTH: " + AUTH);
         Befrest.initialize(this, APP_ID, AUTH, USER_ID);
-
     }
 
     private static String sign() {
